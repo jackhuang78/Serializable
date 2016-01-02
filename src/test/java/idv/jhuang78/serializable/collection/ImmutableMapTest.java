@@ -78,16 +78,13 @@ public class ImmutableMapTest {
 	
 	@Test
 	public void testSome() {
-		int numItems = 100000;
+		int numItems = 1000000;
 		
 		ImmutableMap<Person> map = new ImmutableMap<>(numItems);
 		TIntObjectMap<String> map2 = new TIntObjectHashMap<>();
 		
 		Person p = new Person();
 		for(int i = 0; i < numItems; i++) {	
-//			if(i % 1000 == 0)
-//				System.out.println("testSome " + i);
-		
 			int key = randomString(20).hashCode();
 			p.name.setLength(0);
 			p.name.append(randomString(20));
@@ -103,6 +100,8 @@ public class ImmutableMapTest {
 			String name = map2.get(key);
 			assertEquals("key=" + key, name, p.name.toString());
 		}
+		
+		
 		
 		
 	}
