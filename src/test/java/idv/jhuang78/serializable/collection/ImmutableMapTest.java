@@ -3,21 +3,17 @@ package idv.jhuang78.serializable.collection;
 import static org.junit.Assert.assertEquals;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
-import idv.jhuang78.serializable.Serializable;
+import idv.jhuang78.serializable.Serializer;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
-import java.util.UUID;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.Test;
 
 public class ImmutableMapTest {
 
-	private static class Person extends Serializable {
+	private static class Person {
 		public StringBuilder name;
 		public Person() {
 			this("");
@@ -29,33 +25,37 @@ public class ImmutableMapTest {
 			return new Person(name.toString());
 		}
 		
-		@Override
-		public int size() {
-			return Integer.BYTES + name.length();
-		}
-		@Override
-		public int write(ByteBuffer buffer, int start) {
-			int idx = start;
-			int length = name.length();
-			buffer.putInt(idx, length);
-			idx += Integer.BYTES;
-			for(int i = 0; i < length; i++, idx++) {
-				buffer.put(idx, (byte)name.charAt(i));
+		public static class PersonSerializer extends Serializer<Person> {
+			@Override
+			public int size(Person obj) {
+				return Integer.BYTES + obj.name.length();
 			}
-			return idx;
-		}
-		@Override
-		public int read(ByteBuffer buffer, int start) {
-			int idx = start;
-			int length = buffer.getInt(idx);
-			idx += Integer.BYTES;
-			
-			name.setLength(length);
-			for(int i = 0; i < length; i++, idx++) {
-				name.setCharAt(i, (char)buffer.get(idx));
+			@Override
+			public int write(Person obj, ByteBuffer buffer, int start) {
+				int idx = start;
+				int length = obj.name.length();
+				buffer.putInt(idx, length);
+				idx += Integer.BYTES;
+				for(int i = 0; i < length; i++, idx++) {
+					buffer.put(idx, (byte)obj.name.charAt(i));
+				}
+				return idx;
 			}
-			return idx;
+			@Override
+			public int read(Person obj, ByteBuffer buffer, int start) {
+				int idx = start;
+				int length = buffer.getInt(idx);
+				idx += Integer.BYTES;
+				
+				obj.name.setLength(length);
+				for(int i = 0; i < length; i++, idx++) {
+					obj.name.setCharAt(i, (char)buffer.get(idx));
+				}
+				return idx;
+			}
 		}
+		
+		
 	}
 	
 	private Random rand = new Random(0);
@@ -65,7 +65,7 @@ public class ImmutableMapTest {
 	
 	//@Test
 	public void testSingle() {
-		ImmutableMap<Person> map = new ImmutableMap<>();
+		ImmutableMap<Person> map = new ImmutableMap<>(new Person.PersonSerializer());
 		
 		Person p1 = new Person("Jack");
 		map.put(0, p1);
@@ -80,7 +80,7 @@ public class ImmutableMapTest {
 	public void testSome() {
 		int numItems = 1000000;
 		
-		ImmutableMap<Person> map = new ImmutableMap<>(numItems);
+		ImmutableMap<Person> map = new ImmutableMap<>(numItems, new Person.PersonSerializer());
 		TIntObjectMap<String> map2 = new TIntObjectHashMap<>();
 		
 		Person p = new Person();

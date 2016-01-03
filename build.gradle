@@ -33,3 +33,8 @@ uploadArchives {
        }
     }
 }
+
+task doc(type: Javadoc) {
+	source = sourceSets.main.allJava
+	options.links("http://docs.oracle.com/javase/8/docs/api/")
+}

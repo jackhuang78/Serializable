@@ -23,4 +23,12 @@ public abstract class Serializer<E> {
 	public int read(E obj, DataInputStream in, int start) throws IOException {
 		throw new UnsupportedOperationException();
 	}
+	
+	public int write(E obj, ByteBufferAccess buffer) {
+		throw new UnsupportedOperationException(); 
+	}
+	
+	public int read(E obj, ByteBufferAccess buffer) {
+		throw new UnsupportedOperationException(); 
+	}
 }
