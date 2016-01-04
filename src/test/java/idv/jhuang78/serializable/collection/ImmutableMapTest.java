@@ -31,8 +31,7 @@ public class ImmutableMapTest {
 				return Integer.BYTES + obj.name.length();
 			}
 			@Override
-			public int write(Person obj, ByteBuffer buffer, int start) {
-				int idx = start;
+			public int write(Person obj, ByteBuffer buffer, int idx) {
 				int length = obj.name.length();
 				buffer.putInt(idx, length);
 				idx += Integer.BYTES;
@@ -42,8 +41,7 @@ public class ImmutableMapTest {
 				return idx;
 			}
 			@Override
-			public int read(Person obj, ByteBuffer buffer, int start) {
-				int idx = start;
+			public int read(Person obj, ByteBuffer buffer, int idx) {
 				int length = buffer.getInt(idx);
 				idx += Integer.BYTES;
 				
@@ -63,7 +61,7 @@ public class ImmutableMapTest {
 		return RandomStringUtils.random(length, 0, 0, true, true, null, rand);
 	}
 	
-	//@Test
+	@Test
 	public void testSingle() {
 		ImmutableMap<Person> map = new ImmutableMap<>(new Person.PersonSerializer());
 		

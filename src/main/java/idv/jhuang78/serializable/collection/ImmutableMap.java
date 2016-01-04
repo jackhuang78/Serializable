@@ -1,12 +1,11 @@
 package idv.jhuang78.serializable.collection;
 
-import idv.jhuang78.serializable.Serializable;
 import idv.jhuang78.serializable.Serializer;
 
 import java.nio.ByteBuffer;
 
 
-public class ImmutableMap<E> {
+public class ImmutableMap<E> extends Map<E> {
 	
 	//==============================
 	//	Constants
@@ -22,7 +21,7 @@ public class ImmutableMap<E> {
 	//==============================
 	//	Instance Variables
 	//==============================
-	private Serializer<E> serializer;
+	private final Serializer<E> serializer;
 	private ByteBuffer buffer;
 	private int hashtableSize;
 	private int hashtableMask;
@@ -34,31 +33,25 @@ public class ImmutableMap<E> {
 	//==============================
 	//	Constructors
 	//==============================
-	public ImmutableMap() {
-		this(DEFAULT_HASHTABLE_SIZE, DEFAULT_BUFFER_SIZE, null);
-	}
-	
-	public ImmutableMap(int hashtableSize) {
-		this(hashtableSize, DEFAULT_BUFFER_SIZE, null);
-	}
-	
 	public ImmutableMap(Serializer<E> serializer) {
-		this(DEFAULT_HASHTABLE_SIZE, DEFAULT_BUFFER_SIZE, null);
+		this(DEFAULT_HASHTABLE_SIZE, DEFAULT_BUFFER_SIZE, serializer);
 	}
 	
-	public ImmutableMap(int hashtableSize, int initialBufferSize) {
-		this(hashtableSize, initialBufferSize, null);
+	public ImmutableMap(int hashtableSize, Serializer<E> serializer) {
+		this(hashtableSize, DEFAULT_BUFFER_SIZE, serializer);
 	}
 	
 	public ImmutableMap(int hashtableSize, int initialBufferSize, Serializer<E> serializer) {
 		hashtableSize = roundUp(hashtableSize);
 		this.buffer = ByteBuffer.allocate(hashtableSize * Integer.BYTES + initialBufferSize);
+		this.serializer = serializer;
 		clear(hashtableSize);
 	}
 
 	//==============================
 	//	Public API
 	//==============================
+	@Override
 	public synchronized void clear() {
 		clear(hashtableSize);
 	}
@@ -82,6 +75,7 @@ public class ImmutableMap<E> {
 		frozen = true;
 	}
 	
+	@Override
 	public synchronized boolean put(int key, E obj) {
 		return fastPut(key, obj);
 	}
@@ -100,17 +94,13 @@ public class ImmutableMap<E> {
 			return false;
 		}
 		
-		if(serializer != null)
-			ensureCapacity(next + OFFSET_VALUE + serializer.size(obj));
-		else
-			ensureCapacity(next + OFFSET_VALUE + ((Serializable)obj).size());
-		
-		
+		ensureCapacity(next + OFFSET_VALUE + serializer.size(obj));
 		buffer.putInt(next + OFFSET_NEXT, NULL);
 		buffer.putInt(next + OFFSET_KEY, key);
-		int end = (serializer != null) 
-				? serializer.write(obj, buffer, next + OFFSET_VALUE)
-				: ((Serializable)obj).write(buffer, next + OFFSET_VALUE);
+		int end = serializer.write(obj, buffer, next + OFFSET_VALUE);
+		
+		checkSize(obj, end - next - OFFSET_VALUE);
+		
 		
 		buffer.putInt(ptr, next);
 		next = end;
@@ -120,6 +110,7 @@ public class ImmutableMap<E> {
 		return true;
 	}
 	
+	@Override
 	public boolean get(int key, E obj) {
 		if(frozen) {
 			return fastGet(key, obj);
@@ -137,11 +128,10 @@ public class ImmutableMap<E> {
 		if(loc == NULL)
 			return false;
 		
-		@SuppressWarnings("unused")
-		int end = (serializer != null) 
-				? serializer.read(obj, buffer, loc + OFFSET_VALUE) 
-				: ((Serializable)obj).read(buffer, loc + OFFSET_VALUE);
+		int end = serializer.read(obj, buffer, loc + OFFSET_VALUE);
 		
+		checkSize(obj, end - loc - OFFSET_VALUE);
+				
 		return true;
 	}
 	
@@ -185,6 +175,18 @@ public class ImmutableMap<E> {
 			newBuffer.put(buffer);
 			
 			buffer = newBuffer;
+		}
+	}
+	
+	private void checkSize(E obj, int accessed) {
+		int size = serializer.size(obj);
+		
+		if(size < 0)
+			return;
+		
+		if(size != accessed) {
+			throw new IllegalStateException(String.format("Object reports %d bytes but accessed %s bytes.", 
+					size, accessed));
 		}
 	}
 	

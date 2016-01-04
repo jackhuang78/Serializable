@@ -10,25 +10,25 @@ public abstract class Serializer<E> {
 		throw new UnsupportedOperationException();
 	}
 	
-	public int write(E obj, ByteBuffer buffer, int start) {
+	public int write(E obj, ByteBuffer buffer, int idx) {
 		throw new UnsupportedOperationException();
 	}
-	public int read(E obj, ByteBuffer buffer, int start) {
-		throw new UnsupportedOperationException();
-	}
-	
-	public int write(E obj, DataOutputStream out, int start) throws IOException {
-		throw new UnsupportedOperationException();
-	}
-	public int read(E obj, DataInputStream in, int start) throws IOException {
+	public int read(E obj, ByteBuffer buffer, int idx) {
 		throw new UnsupportedOperationException();
 	}
 	
-	public int write(E obj, ByteBufferAccess buffer) {
-		throw new UnsupportedOperationException(); 
-	}
+//	public int write(E obj, DataOutputStream out, int start) throws IOException {
+//		throw new UnsupportedOperationException();
+//	}
+//	public int read(E obj, DataInputStream in, int start) throws IOException {
+//		throw new UnsupportedOperationException();
+//	}
 	
-	public int read(E obj, ByteBufferAccess buffer) {
-		throw new UnsupportedOperationException(); 
-	}
+//	public int write(E obj, ByteStream stream) {
+//		throw new UnsupportedOperationException(); 
+//	}
+//	
+//	public int read(E obj, ByteStream stream) {
+//		throw new UnsupportedOperationException(); 
+//	}
 }
